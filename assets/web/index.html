@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>调试</title>
+</head>
+
+<body>
+  <div>flutter里和js的通信</div>
+  <div>https://juejin.cn/post/7032940950468952078</div>
+  <div>本地的h5页面</div>
+  <button id="btn">按钮</button>
+  <button id="btn2">调用flutter方法并传参给flutter</button>
+  <button id="btn3">打开原生页面</button>
+  <button id="btn4">调用原生方法，原生回调js方法，并且返给原生值</button>
+  <button id="btn5">调用原生方法，原生回调js方法，没有返给原生值</button>
+  <hr>
+  <button id="countTimeBtn">倒计时</button>
+  <span id="countTimeBox"></span>
+
+  <script src="./js/jquery.min.js"></script>
+  <script src="./js/vconsole.min.js"></script>
+  <script>
+    !function () {
+      new VConsole();
+      console.log(localStorage.getItem('webview_token'));
+      $('#btn').click(function () {
+        console.log('document.cookie:', document.cookie)
+      });
+
+      $('#btn2').click(function () {
+        FlutterChannel_sendMsg.postMessage('js 调用了 flutter 中的 FlutterChannel.sendMsg 方法')
+      });
+
+      $('#btn3').click(function () {
+        FlutterChannel_openPage.postMessage('/demo/weather')
+      });
+
+      $('#btn4').click(function () {
+        window.FlutterCallJs_fn1 = function(value) {
+          alert(value)
+          return 'js 返给 原生的值'
+        }
+        FlutterChannel_inte.postMessage('1')
+      });
+
+      $('#btn5').click(function () {
+        window.FlutterCallJs_fn2 = function(value) {
+          alert(value)
+        }
+        FlutterChannel_inte.postMessage('2')
+      });
+
+      let countTime = 15 * 60 * 1000
+      let timer = null;
+      $('#countTimeBtn').on('click', function() {
+        let time = +new Date();
+        const endTime = countTime + time;
+        sessionStorage.setItem('endTime', endTime);
+        console.log(endTime);
+        clearInterval(timer);
+        timer = setInterval(() => {
+          countTime = countTime - 1000;
+          var minute = Math.floor((countTime / 1000) / 60)
+          var second = (countTime / 1000) % 60
+          // console.log(countTime, minute, second)
+          var text = '';
+          if (minute > 0) {
+            text = `${minute}分${second}秒`
+          } else {
+            if (second > 0) {
+              text = `${second}秒`
+            } else {
+              clearInterval(timer)
+              text = '';
+            }
+          }
+          $('#countTimeBox').html(text)
+        }, 1000)
+      })
+      document.addEventListener('visibilitychange', function() {
+        console.log('document.hidden', document.hidden)
+        // return;
+        if (document.hidden) {
+          // console.log('visibilitychange——hidden')
+        } else {
+          // console.log('visibilitychange——show')
+          let endTime = sessionStorage.getItem('endTime')
+          if (endTime) {
+            endTime = endTime * 1
+            let time = +new Date()
+            let newCountTime = endTime - time;
+            if (newCountTime <= 0) {
+              return
+            }
+            clearInterval(timer);
+            timer = setInterval(() => {
+              newCountTime = newCountTime - 1000;
+              var minute = Math.floor((newCountTime / 1000) / 60)
+              var second = Math.floor((newCountTime / 1000) % 60)
+              // console.log(newCountTime, minute, second)
+              var text = '';
+              if (minute > 0) {
+                text = `${minute}分${second}秒`
+              } else {
+                if (second > 0) {
+                  text = `${second}秒`
+                } else {
+                  clearInterval(timer)
+                  text = '';
+                }
+              }
+              $('#countTimeBox').html(text)
+            }, 1000)
+          }
+        }
+      })
+    }()
+  </script>
+</body>
+
+</html>
